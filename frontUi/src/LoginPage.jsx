@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-const CORRECT_EMAIL = "supajust2004@gmail.com";
-const CORRECT_PASSWORD = "Supa4ever%";
+const CORRECT_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
+const CORRECT_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 
 export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -69,3 +69,4 @@ export default function LoginPage({ onLogin }) {
   );
 }
 // env fix
+// using env variables for login
