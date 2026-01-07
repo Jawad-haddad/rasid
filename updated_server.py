@@ -218,8 +218,19 @@ def upload():
                 }
 
             if anchor and rssi:
+                # --- INPUT VALIDATION START ---
+                try:
+                    rssi_val = int(rssi) # Check if it is a number
+                except ValueError:
+                    return jsonify({"status": "ERR", "msg": "RSSI must be a number"}), 400
+                
+                if rssi_val > 0:
+                    # Optional: Log a warning for impossible physics, but usually safe to process
+                    print(f"⚠️ Warning: Positive RSSI {rssi_val} received from {mac}")
+                # --- INPUT VALIDATION END ---
+
                 # 1. Update Local Filter
-                active_devices[mac]["filter"].update(anchor, int(rssi))
+                active_devices[mac]["filter"].update(anchor, rssi_val)
 
                 # 2. Grab the current zone (from previous calculation)
                 current_zone = active_devices[mac]["stabilizer"].displayed_zone
@@ -239,4 +250,5 @@ def upload():
 
 if __name__ == "__main__":
     print(f"--- SERVER STARTED (STABILIZED + SUPABASE) ---")
+
     app.run(host="0.0.0.0", port=5000)
