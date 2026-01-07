@@ -42,61 +42,64 @@ jobs:
          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome 
        run: |
         cat << 'EOF' > lighthouse-auth.js
-          const puppeteer = require('puppeteer-core');
-          const { startFlow } = require('lighthouse');
-          const fs = require('fs');
+        const puppeteer = require('puppeteer-core');
+        const { startFlow } = require('lighthouse');
+        const fs = require('fs');
 
-          (async () => {
-            const browser = await puppeteer.launch({
-              executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-              headless: "new",
-              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-            });
-            const page = await browser.newPage();
-            page.setDefaultTimeout(60000); // 1 minute timeout
-            
-            try {
+        (async () => {
+          const browser = await puppeteer.launch({
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+            headless: "new",
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+          });
+          const page = await browser.newPage();
+          
+          try {
             const flow = await startFlow(page, {
               name: 'Raqeeb Dashboard Audit',
               configContext: { settings: { screenEmulation: { disabled: true } } }
             });
 
-            console.log('Step 1: Navigating to site...');
-            // Changed from networkidle2 to domcontentloaded for reliability
+            console.log('Step 1: Navigating...');
             await page.goto('https://gradversion3.netlify.app/', { waitUntil: 'domcontentloaded' });
             
             console.log('Step 2: Entering Credentials...');
-            await page.waitForSelector('input[type="email"]');
+            await page.waitForSelector('input[type="email"]', { timeout: 10000 });
             await page.type('input[type="email"]', process.env.EMAIL);
             await page.type('input[type="password"]', process.env.PASSWORD);
             await page.click('.login-button');
             
             console.log('Step 3: Waiting for Dashboard UI...');
-            // If this fails, we catch it and take a screenshot
+            // If this fails, the catch block will trigger and save a screenshot
             await page.waitForSelector('.dashboard-sidebar', { visible: true, timeout: 20000 });
             
             console.log('Step 4: Success! Capturing Snapshot...');
-            await flow.snapshot({ stepName: 'Dashboard' });
+            await flow.snapshot({ stepName: 'Dashboard Post-Login' });
+
             const report = await flow.generateReport();
             fs.writeFileSync('lh-report.html', report);
-            }
+            console.log('Report saved successfully.');
 
-           catch (error) {
-            console.error('AUDIT FAILED:', error.message);
-            await page.screenshot({ path: 'debug-screenshot.png', fullPage: true });
+          } catch (error) {
+            console.error('DIAGNOSTIC ERROR:', error.message);
+            await page.screenshot({ path: 'error-log.png', fullPage: true });
+            console.log('Screenshot saved to help you debug.');
             process.exit(1); 
           } finally {
             await browser.close();
-          })();
-          EOF
-          node lighthouse-auth.js
+          }
+        })();
+        EOF
+        node lighthouse-auth.js
 
-     - name: Upload Report
-       if: always()
+     - name: Upload Results
+       if: always() 
        uses: actions/upload-artifact@v4
        with:
-        name: lighthouse-report
-        path: lh-report.html
+        name: lighthouse-results
+        path: |
+          lh-report.html
+          error-log.png
 
   # LOAD TESTING
   load_audit:
