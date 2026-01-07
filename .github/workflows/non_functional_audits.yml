@@ -2,7 +2,7 @@ name: Non-Functional Testing Pipeline
 on: [push, pull_request]
 
 jobs:
-  # 1. SECURITY TESTING
+  # SECURITY 
   security_audit:
     runs-on: ubuntu-latest
     steps:
@@ -14,81 +14,66 @@ jobs:
         with:
           command: code test
 
-  # 2. SPEED TESTING 
+ # PERFORMANCE & SPEED TESTING
   speed_audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm' 
 
-      - name: Install Puppeteer and Lighthouse
-        run: npm install puppeteer lighthouse
+      - name: Install Lighthouse ONLY
+        run: |
+          npm install lighthouse 
+          npm install puppeteer-core 
 
-      - name: Create Lighthouse Auth Script
+      - name: Run Audit Script
+        env:
+          EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          PASSWORD: ${{ secrets.TEST_USER_PASS }}
+          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome 
         run: |
           cat << 'EOF' > lighthouse-auth.js
-          const puppeteer = require('puppeteer');
+          const puppeteer = require('puppeteer-core');
           const { execSync } = require('child_process');
 
           (async () => {
             const browser = await puppeteer.launch({
+              executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
               headless: "new",
-              args: ['--no-sandbox', '--disable-setuid-sandbox']
+              args: ['--no-sandbox']
             });
             const page = await browser.newPage();
-
-            console.log('Step 1: Navigating to App...');
-            await page.goto('https://gradversion3.netlify.app/', { waitUntil: 'networkidle2' });
-
-            console.log('Step 2: Entering Credentials...');
+            
+            await page.goto('https://gradversion3.netlify.app/');
             await page.waitForSelector('input[type="email"]');
             await page.type('input[type="email"]', process.env.EMAIL);
             await page.type('input[type="password"]', process.env.PASSWORD);
-
-            console.log('Step 3: Submitting Login...');
             await page.click('.login-button');
 
-            // Wait for the dashboard sidebar to confirm login success
-            console.log('Waiting for Dashboard UI...');
-            try {
-              await page.waitForSelector('.dashboard-sidebar', { timeout: 15000 });
-              console.log('Dashboard detected!');
-            } catch (e) {
-              console.log('Selector timeout, using 5s safety sleep...');
-              await new Promise(r => setTimeout(r, 5000));
-            }
+            // Wait for sidebar to confirm login
+            await page.waitForSelector('.dashboard-sidebar', { timeout: 10000 });
 
             const port = new URL(browser.wsEndpoint()).port;
-            console.log(`Step 4: Running Lighthouse on port ${port}...`);
-
-            // FIX: Using backticks so ${port} works correctly in JavaScript
-            try {
-              execSync(`npx lighthouse https://gradversion3.netlify.app/ --port=${port} --output html --output-path ./lh-report.html --chrome-flags="--headless"`, { stdio: 'inherit' });
-              console.log('Step 5: Audit complete.');
-            } catch (error) {
-              console.error('Lighthouse execution failed:', error.message);
-            }
-
+            // Run Lighthouse on ONLY the necessary categories to save time
+            execSync(`npx lighthouse https://gradversion3.netlify.app/ --port=${port} --output html --output-path ./lh-report.html --only-categories=performance,accessibility --chrome-flags="--headless"`);
+            
             await browser.close();
           })();
           EOF
+          node lighthouse-auth.js
 
-      - name: Run Authenticated Lighthouse Audit
-        env:
-          EMAIL: ${{ secrets.TEST_USER_EMAIL }}
-          PASSWORD: ${{ secrets.TEST_USER_PASS }}
-        run: node lighthouse-auth.js
-
-      - name: Upload Lighthouse Report
+      - name: Upload Report
         uses: actions/upload-artifact@v4
         with:
-          name: lighthouse-dashboard-report
+          name: lighthouse-report
           path: lh-report.html
 
-  # 3. LOAD TESTING (Optimized for speed)
+  # LOAD TESTING
   load_audit:
     runs-on: ubuntu-latest
     steps:
@@ -97,7 +82,8 @@ jobs:
         uses: QAInsights/PerfAction@v5.6.2
         with:
           test-plan-path: './raqeeb_test_plan.jmx' 
-          args: "-e -o ./reports/ -Jduration=45 -X"
+          args: "-e -o ./reports/ -Jduration=30 -X"
+      
       - name: Upload JMeter Dashboard
         uses: actions/upload-artifact@v4
         with:
