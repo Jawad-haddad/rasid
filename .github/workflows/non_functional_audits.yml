@@ -19,14 +19,59 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run Lighthouse Audit
-        uses: treosh/lighthouse-ci-action@v12
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          urls: 'https://gradversion3.netlify.app/' 
-          uploadArtifacts: true
-          temporaryPublicStorage: true
+          node-version: '20'
 
-  # 3. LOAD TESTING: Checks stability for 100 users
+      - name: Install Puppeteer and Lighthouse
+        run: npm install puppeteer lighthouse
+
+      - name: Create Lighthouse Auth Script
+        run: |
+          cat << 'EOF' > lighthouse-auth.js
+          const puppeteer = require('puppeteer');
+          const { execSync } = require('child_process');
+
+          (async () => {
+            const browser = await puppeteer.launch({
+              headless: "new",
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
+
+            console.log('Logging in to gradversion3.netlify.app...');
+            await page.goto('https://gradversion3.netlify.app/login', { waitUntil: 'networkidle2' });
+
+            await page.type('#email', '${{ secrets.TEST_USER_EMAIL }}');
+            await page.type('#password', '${{ secrets.TEST_USER_PASS }}');
+            
+            await Promise.all([
+              page.click('#login-button'), 
+              page.waitForNavigation({ waitUntil: 'networkidle0' }),
+            ]);
+
+            console.log('Login successful. Running Lighthouse on Dashboard...');
+            const port = new URL(browser.wsEndpoint()).port;
+            
+            execSync(npx lighthouse https://gradversion3.netlify.app/dashboard --port=${port} --output html --output-path ./lh-report.html --chrome-flags="--headless");
+
+            await browser.close();
+            console.log('Audit complete.');
+          })();
+          EOF
+
+      - name: Run Authenticated Lighthouse Audit
+        run: node lighthouse-auth.js
+
+      - name: Upload Lighthouse Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-dashboard-report
+          path: lh-report.html
+
+  #  LOAD TESTING: Checks stability for 100 users
   load_audit:
     runs-on: ubuntu-latest
     steps:
