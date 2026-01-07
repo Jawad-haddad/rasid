@@ -30,11 +30,11 @@ jobs:
 
   api_audit:
     name: Postman API Audit
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: logic_audit # Will run if logic tests pass
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
