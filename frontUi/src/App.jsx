@@ -26,3 +26,4 @@ function App() {
 }
 
 export default App;
+// force change for supabase auth
