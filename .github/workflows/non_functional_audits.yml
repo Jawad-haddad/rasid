@@ -55,6 +55,7 @@ jobs:
             const page = await browser.newPage();
             page.setDefaultTimeout(60000); // 1 minute timeout
             
+            try {
             const flow = await startFlow(page, {
               name: 'Raqeeb Dashboard Audit',
               configContext: { settings: { screenEmulation: { disabled: true } } }
@@ -68,23 +69,24 @@ jobs:
             await page.waitForSelector('input[type="email"]');
             await page.type('input[type="email"]', process.env.EMAIL);
             await page.type('input[type="password"]', process.env.PASSWORD);
-            
-            console.log('Step 3: Clicking Login...');
-            // FIXED: Removed page.waitForNavigation() entirely.
-            // We just click and then wait for the dashboard element to appear.
             await page.click('.login-button');
             
-            console.log('Step 4: Waiting for Dashboard UI...');
-            await page.waitForSelector('.dashboard-sidebar', { visible: true, timeout: 30000 });
+            console.log('Step 3: Waiting for Dashboard UI...');
+            // If this fails, we catch it and take a screenshot
+            await page.waitForSelector('.dashboard-sidebar', { visible: true, timeout: 20000 });
             
-            console.log('Step 5: Capturing Snapshot...');
-            await flow.snapshot({ stepName: 'Dashboard Post-Login' });
-
+            console.log('Step 4: Success! Capturing Snapshot...');
+            await flow.snapshot({ stepName: 'Dashboard' });
             const report = await flow.generateReport();
             fs.writeFileSync('lh-report.html', report);
-            
+            }
+
+           catch (error) {
+            console.error('AUDIT FAILED:', error.message);
+            await page.screenshot({ path: 'debug-screenshot.png', fullPage: true });
+            process.exit(1); 
+          } finally {
             await browser.close();
-            console.log('Audit Complete!');
           })();
           EOF
           node lighthouse-auth.js
