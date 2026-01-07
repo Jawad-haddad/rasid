@@ -14,7 +14,7 @@ jobs:
         with:
           command: code test
 
- # PERFORMANCE & SPEED TESTING
+  # PERFORMANCE & SPEED TESTING
   speed_audit:
     runs-on: ubuntu-latest
     steps:
@@ -26,10 +26,9 @@ jobs:
           node-version: '20'
           cache: 'npm' 
 
-      - name: Install Lighthouse ONLY
+      - name: Install Lighthouse and Puppeteer
         run: |
-          npm install lighthouse 
-          npm install puppeteer-core 
+          npm install lighthouse puppeteer-core
 
       - name: Run Audit Script
         env:
@@ -39,29 +38,41 @@ jobs:
         run: |
           cat << 'EOF' > lighthouse-auth.js
           const puppeteer = require('puppeteer-core');
-          const { execSync } = require('child_process');
+          const { startFlow } = require('lighthouse');
+          const fs = require('fs');
 
           (async () => {
             const browser = await puppeteer.launch({
               executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
               headless: "new",
-              args: ['--no-sandbox']
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
             });
             const page = await browser.newPage();
-            
+         
+            const flow = await startFlow(page, {
+              name: 'Raqeeb Authenticated Dashboard Audit',
+              configContext: { settings: { screenEmulation: { disabled: true } } }
+            });
+
+            console.log('Step 1: Navigating to Login...');
             await page.goto('https://gradversion3.netlify.app/');
             await page.waitForSelector('input[type="email"]');
             await page.type('input[type="email"]', process.env.EMAIL);
             await page.type('input[type="password"]', process.env.PASSWORD);
-            await page.click('.login-button');
-
-            // Wait for sidebar to confirm login
-            await page.waitForSelector('.dashboard-sidebar', { timeout: 10000 });
-
-            const port = new URL(browser.wsEndpoint()).port;
-            // Run Lighthouse on ONLY the necessary categories to save time
-            execSync(`npx lighthouse https://gradversion3.netlify.app/ --port=${port} --output html --output-path ./lh-report.html --only-categories=performance,accessibility --chrome-flags="--headless"`);
             
+            console.log('Step 2: Submitting Credentials...');
+            await page.click('.login-button');
+            
+            await page.waitForSelector('.dashboard-sidebar', { timeout: 15000 });
+            console.log('Step 3: Dashboard detected! Capturing Snapshot...');
+
+            await flow.snapshot();
+
+            // 4. Generate and save the report
+            const report = await flow.generateReport();
+            fs.writeFileSync('lh-report.html', report);
+            
+            console.log('Step 4: Report generated successfully.');
             await browser.close();
           })();
           EOF
