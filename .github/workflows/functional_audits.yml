@@ -56,4 +56,4 @@ jobs:
         run: sleep 5
 
       - name: Run Postman Collection
-        run: newman run ./Raqeeb API Tests.postman_collection.json
+        run: newman run ./raqeeb_collection.json
