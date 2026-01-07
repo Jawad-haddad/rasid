@@ -1,4 +1,4 @@
-name: Raqeeb Testing Pipeline
+name: Non-Functional Testing Pipeline
 on: [push, pull_request]
 
 jobs:
