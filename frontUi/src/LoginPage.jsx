@@ -1,22 +1,27 @@
 import { useState } from "react";
+import { supabase } from "../supabase";
 
-const CORRECT_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
-const CORRECT_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
-
-export default function LoginPage({ onLogin }) {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    if (email === CORRECT_EMAIL && password === CORRECT_PASSWORD) {
-      setError("");
-      onLogin();
-    } else {
-      setError("Wrong email or password");
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
     }
+
+    setLoading(false);
   };
 
   return (
@@ -38,7 +43,7 @@ export default function LoginPage({ onLogin }) {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="off"
+                autoComplete="email"
               />
             </div>
 
@@ -50,27 +55,27 @@ export default function LoginPage({ onLogin }) {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
               />
             </div>
 
             {error && <p className="login-error">{error}</p>}
 
-            <button type="submit" className="login-button">
-              Sign in
+            <button type="submit" className="login-button" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
-
-          <p className="login-hint">
-            Hint: {CORRECT_EMAIL} / {CORRECT_PASSWORD}
-          </p>
         </div>
       </div>
     </div>
   );
 }
-// env fix
-// using env variables for login
-// force change for supabase auth
-// force change for supabase auth
-// force commit
-// force commit
+
+
+
+
+
+
+
+
+
