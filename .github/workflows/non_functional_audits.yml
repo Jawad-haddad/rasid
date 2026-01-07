@@ -41,28 +41,35 @@ jobs:
             });
             const page = await browser.newPage();
 
-            console.log('Logging in to gradversion3.netlify.app...');
-            await page.goto('https://gradversion3.netlify.app/login', { waitUntil: 'networkidle2' });
+            console.log('Navigating to Netlify Login...');
+            await page.goto('https://gradversion3.netlify.app/', { waitUntil: 'networkidle2' });
 
-            await page.type('#email', '${{ secrets.TEST_USER_EMAIL }}');
-            await page.type('#password', '${{ secrets.TEST_USER_PASS }}');
+            await page.waitForSelector('input[type="email"]');
+            await page.type('input[type="email"]', process.env.EMAIL);
+            await page.type('input[type="password"]', process.env.PASSWORD);
+
+            console.log('Credentials entered. Submitting...');
             
             await Promise.all([
-              page.click('#login-button'), 
+              page.click('.login-button'), 
               page.waitForNavigation({ waitUntil: 'networkidle0' }),
+              new Promise(r => setTimeout(r, 5000))
             ]);
 
             console.log('Login successful. Running Lighthouse on Dashboard...');
             const port = new URL(browser.wsEndpoint()).port;
             
-            execSync(npx lighthouse https://gradversion3.netlify.app/dashboard --port=${port} --output html --output-path ./lh-report.html --chrome-flags="--headless");
+            execSync('npx lighthouse https://gradversion3.netlify.app/dashboard --port=${port} --output html --output-path ./lh-report.html --chrome-flags="--headless"');
 
             await browser.close();
-            console.log('Audit complete.');
+            console.log('Audit complete. Report generated.');
           })();
           EOF
 
       - name: Run Authenticated Lighthouse Audit
+        env:
+          EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          PASSWORD: ${{ secrets.TEST_USER_PASS }}
         run: node lighthouse-auth.js
 
       - name: Upload Lighthouse Report
