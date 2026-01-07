@@ -43,7 +43,7 @@ THRESH_MIDDLE = -70
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-app = Flask(_name_)
+app = Flask(__name__)
 CORS(app)
 
 class AnchorFilter:
@@ -206,6 +206,6 @@ def upload():
     except Exception as e:
         return jsonify({"status": "ERR", "msg": str(e)}), 500
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     print(f"--- SERVER STARTED (STABILIZED) ---")
     app.run(host="0.0.0.0", port=5000)
