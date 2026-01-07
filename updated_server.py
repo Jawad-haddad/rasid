@@ -24,8 +24,8 @@ OFFSET_RIGHT = 0
 THRESH_FRONT = -55
 THRESH_MIDDLE = -60
 
-SUPABASE_URL = "https://txbmdnhoyxsckdnbeggw.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4Ym1kbmhveXhzY2tkbmJlZ2d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0NzQyNjcsImV4cCI6MjA3OTA1MDI2N30.oe1IxHQLvAx176ieo5AccwkE9IAbs6c7SkuagETC4cY"
+SUPABASE_URL = ""
+SUPABASE_KEY = "***************************************"
 
 supabase = None
 try:
@@ -208,4 +208,5 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 
     app.run(host="0.0.0.0", port=5000)
+
 
