@@ -47,7 +47,7 @@ app = Flask(__name__)
 CORS(app)
 
 class AnchorFilter:
-    def _init_(self):
+    def __init__(self):
         self.history = {}
         self.last_seen = {}
 
@@ -77,7 +77,7 @@ class AnchorFilter:
 
 # --- NEW CLASS: ZONE STABILIZER ---
 class ZoneStabilizer:
-    def _init_(self):
+    def __init__(self):
         # Keeps track of the last N calculated zones
         self.history = deque(maxlen=STABILIZATION_COUNT)
         self.displayed_zone = "Unknown"
