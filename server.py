@@ -15,7 +15,7 @@ import os
 TARGET_MAC = "28:c2:1f:ec:23:1a"
 
 # 2. SYSTEM TUNING
-MAX_STALE_SECONDS = 4.0   # If phone not seen for 4s, remove it
+MAX_STALE_SECONDS = 4.0   # If phone not seen for 4s, remove it
 NOISE_FLOOR       = -95   # Ignore signals weaker than this
 UPDATE_INTERVAL   = 0.2   # Screen refresh rate (fast)
 
