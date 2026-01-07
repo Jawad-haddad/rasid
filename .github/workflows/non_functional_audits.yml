@@ -42,49 +42,52 @@ jobs:
          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome 
        run: |
         cat << 'EOF' > lighthouse-auth.js
-        const puppeteer = require('puppeteer-core');
-        const { startFlow } = require('lighthouse');
-        const fs = require('fs');
+          const puppeteer = require('puppeteer-core');
+          const { startFlow } = require('lighthouse');
+          const fs = require('fs');
 
-        (async () => {
-          const browser = await puppeteer.launch({
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-            headless: "new",
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-          });
-          const page = await browser.newPage();
-          
-          // Using User Flows allows us to navigate through login before auditing
-          const flow = await startFlow(page, {
-            name: 'Raqeeb Dashboard Audit',
-            configContext: { settings: { screenEmulation: { disabled: true } } }
-          });
+          (async () => {
+            const browser = await puppeteer.launch({
+              executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+              headless: "new",
+              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            });
+            const page = await browser.newPage();
+            page.setDefaultTimeout(60000); // 1 minute timeout
+            
+            const flow = await startFlow(page, {
+              name: 'Raqeeb Dashboard Audit',
+              configContext: { settings: { screenEmulation: { disabled: true } } }
+            });
 
-          console.log('Step 1: Login');
-          await page.goto('https://gradversion3.netlify.app/', { waitUntil: 'networkidle2' });
-          await page.waitForSelector('input[type="email"]');
-          await page.type('input[type="email"]', process.env.EMAIL);
-          await page.type('input[type="password"]', process.env.PASSWORD);
-          
-          await Promise.all([
-            page.click('.login-button'),
-            page.waitForNavigation({ waitUntil: 'networkidle2' })
-          ]);
-          
-          await page.waitForSelector('.dashboard-sidebar', { timeout: 15000 });
-          
-          console.log('Step 2: Auditing Dashboard...');
-          // .snapshot() captures the current state, .navigate() audits the load performance
-          await flow.snapshot({ stepName: 'Dashboard Post-Login' });
+            console.log('Step 1: Navigating to site...');
+            // Changed from networkidle2 to domcontentloaded for reliability
+            await page.goto('https://gradversion3.netlify.app/', { waitUntil: 'domcontentloaded' });
+            
+            console.log('Step 2: Entering Credentials...');
+            await page.waitForSelector('input[type="email"]');
+            await page.type('input[type="email"]', process.env.EMAIL);
+            await page.type('input[type="password"]', process.env.PASSWORD);
+            
+            console.log('Step 3: Clicking Login...');
+            // FIXED: Removed page.waitForNavigation() entirely.
+            // We just click and then wait for the dashboard element to appear.
+            await page.click('.login-button');
+            
+            console.log('Step 4: Waiting for Dashboard UI...');
+            await page.waitForSelector('.dashboard-sidebar', { visible: true, timeout: 30000 });
+            
+            console.log('Step 5: Capturing Snapshot...');
+            await flow.snapshot({ stepName: 'Dashboard Post-Login' });
 
-          const report = await flow.generateReport();
-          fs.writeFileSync('lh-report.html', report);
-          
-          await browser.close();
-          console.log('Audit Complete!');
-        })();
-        EOF
-        node lighthouse-auth.js
+            const report = await flow.generateReport();
+            fs.writeFileSync('lh-report.html', report);
+            
+            await browser.close();
+            console.log('Audit Complete!');
+          })();
+          EOF
+          node lighthouse-auth.js
 
      - name: Upload Report
        if: always()
