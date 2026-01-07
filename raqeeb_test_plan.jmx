@@ -30,8 +30,8 @@
       <hashTree/>
 
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="espData Load">
-        <intProp name="ThreadGroup.num_threads">100</intProp>
-        <intProp name="ThreadGroup.ramp_time">10</intProp>
+        <intProp name="ThreadGroup.num_threads">50</intProp>
+        <intProp name="ThreadGroup.ramp_time">20</intProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
           <stringProp name="LoopController.loops">1</stringProp>
         </elementProp>
@@ -61,8 +61,8 @@
       </hashTree>
 
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="whitelist Load">
-        <intProp name="ThreadGroup.num_threads">100</intProp>
-        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <intProp name="ThreadGroup.num_threads">50</intProp>
+        <intProp name="ThreadGroup.ramp_time">20</intProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
           <stringProp name="LoopController.loops">1</stringProp>
         </elementProp>
@@ -78,14 +78,4 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <stringProp name="Argument.value">{&#xd;
-  &quot;mac&quot;: &quot;${__RandomString(2,0123456789ABCDEF)}:${__RandomString(2,0123456789ABCDEF)}:${__RandomString(2,0123456789ABCDEF)}:${__RandomString(2,0123456789ABCDEF)}:${__RandomString(2,0123456789ABCDEF)}:${__RandomString(2,0123456789ABCDEF)}&quot;&#xd;
-}</stringProp>
-              </elementProp>
-            </collectionProp>
-          </elementProp>
-        </HTTPSamplerProxy>
-        <hashTree/>
-      </hashTree>
-    </hashTree>
-  </hashTree>
-</jmeterTestPlan>
+  &quot;mac&quot
