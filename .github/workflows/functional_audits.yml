@@ -28,13 +28,13 @@ jobs:
           name: functional-logic-results
           path: logic-report.xml
 
-  api_audit:
+api_audit:
     name: Postman API Audit
-    runs-on: self-hosted
-    needs: logic_audit # Will run if logic tests pass
+    runs-on: ubuntu-latest # Changed from self-hosted to ensure a clean environment
+    needs: logic_audit 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -47,10 +47,15 @@ jobs:
           pip install -r requirements.txt
 
       - name: Start Server in Background
-        run: python server.py & 
+        # 'nohup' prevents the server from closing when the shell step finishes
+        run: nohup python server.py > server.log 2>&1 & 
         
-      - name: Wait for Server
-        run: sleep 5
+      - name: Wait for Server Health Check
+        # This loops until localhost:5000 (or your port) returns a 200 OK
+        run: |
+          timeout 30s bash -c 'until curl -s localhost:5000; do echo "Waiting for server..."; sleep 2; done'
+          echo "Server is UP!"
 
       - name: Run Postman Collection
-        run: newman run ./raqeeb_collection.json
+        # Added --bail to stop on first failure for cleaner debugging
+        run: newman run ./raqeeb_collection.json --bail
