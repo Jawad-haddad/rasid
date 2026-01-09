@@ -46,18 +46,18 @@ jobs:
           pip install -r requirements.txt
 
       - name: Start Server in Background
-        # Starts your flask/fastapi server and logs output for debugging
-        run: nohup python server.py > server.log 2>&1 & 
+        # THIS IS THE PART YOU WERE MISSING:
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: nohup python server.py > server.log 2>&1 &
         
       - name: Wait for Server (Health Check)
-        # This prevents Newman from starting until the server actually responds on port 5000
         run: |
           timeout 30s bash -c 'until curl -s localhost:5000; do echo "Waiting for server..."; sleep 2; done'
           echo "Server is UP and running!"
 
       - name: Run Postman Collection
-        # --env-var "base_url=..." replaces your local IP with localhost dynamically
-        # --timeout-request 5000 ensures TC07 fails in 5 seconds rather than 4 minutes if offline
         run: |
           newman run "./raqeeb_collection.json" \
           --env-var "base_url=http://localhost:5000" \
