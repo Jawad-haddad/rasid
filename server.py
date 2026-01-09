@@ -6,6 +6,7 @@ import time
 import logging
 import sys
 import os
+from dotenv import load_dotenv
 from supabase import create_client, Client
 
 TARGET_MAC = "28:c2:1f:ec:23:1a"
@@ -24,8 +25,8 @@ OFFSET_RIGHT = 0
 THRESH_FRONT = -55
 THRESH_MIDDLE = -60
 
-SUPABASE_URL = ""
-SUPABASE_KEY = "***************************************"
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase = None
 try:
@@ -207,6 +208,6 @@ if __name__ == "__main__":
     print(f"--- SERVER STARTED ---")
     app.run(host="0.0.0.0", port=5000)
 
-    app.run(host="0.0.0.0", port=5000)
+
 
 
