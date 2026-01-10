@@ -46,7 +46,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: Start Server in Background
-        # THIS IS THE PART YOU WERE MISSING:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
