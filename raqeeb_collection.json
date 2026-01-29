@@ -279,10 +279,10 @@
 					"script": {
 						"exec": [
 							"pm.test(\"Database rejects invalid MAC format\", function () {\r",
-							"    // database has a constraint, this returns 400 or 500\r",
+							"    // database has a constraint, this returns 400\r",
 							"    // If it allows it (no constraint), this test will FAIL (Red).\r",
 							"    // Adjusted based on actual DB rules.\r",
-							"    pm.expect(pm.response.code).to.be.oneOf([400, 500]);\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([400]);\r",
 							"\r",
 							"});"
 						],
@@ -506,8 +506,8 @@
 					"script": {
 						"exec": [
 							"pm.test(\"Server rejects invalid data type\", function () {\r",
-							"    // We expect a 400 Bad Request or 500 Error, NOT a 200 OK\r",
-							"    pm.expect(pm.response.code).to.be.oneOf([400, 422, 500]);\r",
+							"    // We expect a 400 Bad Request, NOT a 200 OK\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([400, 422]);\r",
 							"});"
 						],
 						"type": "text/javascript",
@@ -548,8 +548,8 @@
 					"script": {
 						"exec": [
 							"pm.test(\"Protocol: Reject GET on POST endpoint\", function () {\r",
-							"    // Expect 405 Method Not Allowed (Standard) or 404/500\r",
-							"    pm.expect(pm.response.code).to.be.oneOf([405, 404, 500]);\r",
+							"    // Expect 405 Method Not Allowed (Standard) or 404\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([405, 404]);\r",
 							"});"
 						],
 						"type": "text/javascript",
